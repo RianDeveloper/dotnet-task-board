@@ -1,73 +1,65 @@
-## Task board
+# TaskBoard
 
-### .NET 8 с разделением на слои (Clean Architecture), CQRS (MediatR), валидацией (FluentValidation), EF Core и SQLite.
+REST API для доски задач: проекты и задачи со статусами, пагинация и фильтрация. Слои: Domain, Application, Infrastructure, Api.
+
+## Стек
+
+- .NET 8, ASP.NET Core Minimal APIs
+- MediatR (CQRS), FluentValidation
+- EF Core 8, SQLite
+- xUnit, FluentAssertions, `WebApplicationFactory`
+- Swagger в среде Development
 
 ## Требования
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-## Сборка и тесты
+## Запуск локально
 
 ```bash
-dotnet restore SharpPet.sln
-dotnet build SharpPet.sln
-dotnet test SharpPet.sln
+dotnet restore
+dotnet build
 ```
 
-## Запуск API
+API (по умолчанию см. `launchSettings.json`):
 
 ```bash
-dotnet run --project src/SharpPet.Api/SharpPet.Api.csproj
+dotnet run --project src/SharpPet.Api
 ```
 
-В режиме Development доступен Swagger UI: по умолчанию [http://localhost:5088/swagger](http://localhost:5088/swagger) (см. `src/SharpPet.Api/Properties/launchSettings.json`).
-
-Если строка подключения к БД нигде не задана, используется значение по умолчанию в коде: файл `app.db` в рабочей директории процесса.
+В Development доступен Swagger UI (например `http://localhost:5088/swagger`).
 
 ## Конфигурация
 
-В репозитории **нет** строк подключения к продакшен-БД и других секретов: только общие настройки логирования и хоста (`appsettings*.json`).
+| Ключ | Назначение |
+|------|------------|
+| `ConnectionStrings:Database` | Строка подключения SQLite; если не задана, в коде используется `Data Source=app.db` |
+| `ConnectionStrings__Database` | То же через переменную окружения (двойное подчёркивание) |
+| User Secrets (`ConnectionStrings:Database`) | Локальная строка без коммита: в каталоге `src/SharpPet.Api` — `dotnet user-secrets set "ConnectionStrings:Database" "..."` |
+| `appsettings.Development.local.json` | Опциональные переопределения в Development (файл в `.gitignore`) |
 
-**Строка подключения SQLite** задаётся через конфигурацию (приоритет выше — ниже по списку):
-
-1. Переменные окружения, в т.ч. `ConnectionStrings__Database` (двойное подчёркивание для вложенного ключа).
-2. [User Secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) для проекта API (удобно в Development): в каталоге `src/SharpPet.Api` выполните, например:
-
-```bash
-dotnet user-secrets set "ConnectionStrings:Database" "Data Source=app.db"
-```
-
-Список секретов: `dotnet user-secrets list`.
-
-3. Локальные переопределения без коммита: файл `appsettings.Development.local.json` (игнорируется Git, см. `.gitignore`), формат как у обычного `appsettings`.
-
-Для продакшена задайте `ConnectionStrings__Database` (или секреты в панели хостинга) и не храните реальные значения в Git.
+В репозитории в `appsettings*.json` нет секретов и продакшен-строк подключения.
 
 ## HTTP API
 
-Базовый префикс: `/api`. Перечисления в JSON передаются строками (`Todo`, `InProgress`, `Done`).
-
-### Проекты
+Префикс `/api`. Статусы задач в JSON — строки: `Todo`, `InProgress`, `Done`.
 
 | Метод | Путь | Описание |
 |--------|------|----------|
-| `GET` | `/api/projects` | Список проектов с пагинацией (`page`, `pageSize`, по умолчанию 1 и 20) |
-| `POST` | `/api/projects` | Создание проекта (`{ "name": "..." }`) |
-| `GET` | `/api/projects/{projectId}` | Проект по идентификатору |
+| `GET` | `/health` | Проверка доступности |
+| `GET` | `/api/projects` | Список проектов (`page`, `pageSize`, по умолчанию 1 и 20) |
+| `POST` | `/api/projects` | Тело: `{ "name": "..." }`. Ответ: `201` и `{ "id" }` |
+| `GET` | `/api/projects/{projectId}` | Проект по id |
 | `DELETE` | `/api/projects/{projectId}` | Удаление проекта (задачи каскадно) |
-
-### Задачи
-
-| Метод | Путь | Описание |
-|--------|------|----------|
-| `POST` | `/api/projects/{projectId}/tasks` | Создание задачи (`title`, опционально `description`, `dueDate`, `status`) |
-| `GET` | `/api/projects/{projectId}/tasks` | Список задач проекта (`page`, `pageSize`, опционально `status`) |
-| `PATCH` | `/api/tasks/{taskId}/status` | Смена статуса (`{ "status": "Done" }`) |
+| `POST` | `/api/projects/{projectId}/tasks` | Создание задачи: `title`, опционально `description`, `dueDate`, `status` |
+| `GET` | `/api/projects/{projectId}/tasks` | Список задач (`page`, `pageSize`, опционально `status`) |
+| `PATCH` | `/api/tasks/{taskId}/status` | Тело: `{ "status": "Done" }` |
 | `DELETE` | `/api/tasks/{taskId}` | Удаление задачи |
 
-### Служебное
+Ошибки: `404` для отсутствующих сущностей, `400` с полем `errors` при ошибках валидации, `500` для прочих сбоев. При старте (кроме окружения `Testing`) применяются миграции EF Core.
 
-| Метод | Путь | Описание |
-|--------|------|----------|
-| `GET` | `/health` | Проверка доступности сервиса |
+## Тесты
 
+```bash
+dotnet test
+```

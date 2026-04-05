@@ -1,6 +1,4 @@
-# SharpPet
-
-Pet-проект: REST API «доски задач» на .NET 8 с разделением на слои (Clean Architecture), CQRS (MediatR), валидацией (FluentValidation), EF Core и SQLite.
+## Pet-проект: REST API «доски задач» на .NET 8 с разделением на слои (Clean Architecture), CQRS (MediatR), валидацией (FluentValidation), EF Core и SQLite.
 
 ## Требования
 

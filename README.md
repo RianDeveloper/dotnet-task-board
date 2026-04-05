@@ -1,4 +1,6 @@
-## Pet-проект: REST API «доски задач» на .NET 8 с разделением на слои (Clean Architecture), CQRS (MediatR), валидацией (FluentValidation), EF Core и SQLite.
+## Task board
+
+### .NET 8 с разделением на слои (Clean Architecture), CQRS (MediatR), валидацией (FluentValidation), EF Core и SQLite.
 
 ## Требования
 
